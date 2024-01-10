@@ -10,4 +10,6 @@ You can access the completed analysis by downloading the HTML file, or if you wa
 1. To download, click on either "Case Study Cyclistic.html" or "Case Study Cyclistic.qmd"
 2. Click on the 3 dots near the top right and click "Download" or alternatively, `Ctrl` + `Shift` + `S` to download the file.
 3. Read/Edit the project!
+
+The dataset can be retrieved from [here](https://divvy-tripdata.s3.amazonaws.com/index.html) as it is too big to upload to GitHub.
 ## Thanks for checking it out!
