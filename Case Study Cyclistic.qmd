@@ -1,0 +1,418 @@
+---
+title: "Case Study: Cyclistic - Bike Sharing Company "
+author: "Hayden M."
+date: today
+date-format: long
+format: 
+  html:
+    embed-resources: true
+editor: source
+---
+
+# **Introduction**
+
+This is a capstone project as part of the Google Data Analytic Course. The process is split into 6 different parts: **ask, prepare, process, analyze, share** and **act**. I will be using **R** and **RStudio** to perform this case study.
+
+# **Scenario**
+
+You are a junior data analyst working in the marketing analyst team at Cyclistic, a bike-share company in Chicago. The director of marketing believes the company's future success depends on maximizing the number of annual memberships. Therefore, your team wants to understand how casual riders and annual members use Cyclistic bikes differently. From these insights, your team will design a new marketing strategy to convert casual riders into annual members. But first, Cyclistic executives must approve your recommendations, so they must be backed up with compelling data insights and professional data visualizations
+
+## **About the Company**
+
+*In 2016, Cyclistic launched a successful bike-share offering. Since then, the program has grown to a fleet of 5,824 bicycles that are geotracked and locked into a network of 692 stations across Chicago. The bikes can be unlocked from one station and returned to any other station in the system anytime.*
+
+*Until now, Cyclistic's marketing strategy relied on building general awareness and appealing to broad consumer segments. One 2 approach that helped make these things possible was the flexibility of its pricing plans: single-ride passes, full-day passes, and annual memberships. Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members.*
+
+*Cyclistic's finance analysts have concluded that annual members are much more profitable than casual riders. Although the pricing flexibility helps Cyclistic attract more customers, Moreno believes that maximizing the number of annual members will be key to future growth. Rather than creating a marketing campaign that targets all-new customers, Moreno believes there is a very good chance to convert casual riders into members. She notes that casual riders are already aware of the Cyclistic program and have chosen Cyclistic for their mobility needs.*
+
+*Moreno has set a clear goal: Design marketing strategies aimed at converting casual riders into annual members. In order to do that, however, the marketing analyst team needs to better understand how annual members and casual riders differ, why casual riders would buy a membership, and how digital media could affect their marketing tactics. Moreno and her team are interested in analyzing the Cyclistic historical bike trip data to identify trends.*
+
+(Taken from Google Data Analytic Course)
+
+# **Step 1 - Ask**
+
+Using information from the about section, we are trying to figure out how casual riders and members behave and how we can convert casual members using new market strategies.
+
+Therefore, the main question is:
+
+**"How do annual members and casual riders use Cyclistic bikes differently?"**
+
+Some other questions we may have:
+
+-   "Why would casual riders buy memberships?"
+
+-   "Is the current marketing strategy effective? How could they be improved?"
+
+-   "What are the patterns in usage between the two groups of riders?"
+
+# **Step 2- Prepare**
+
+The data we will be using is located [here](https://divvy-tripdata.s3.amazonaws.com/index.html).
+
+We are interested in data from the last 12 months to make up-to-date recommendations, meaning we will be using data between August 2022 - July 2023. The data has been made available by Motivate International Inc. under this [license](https://www.divvybikes.com/data-license-agreement).
+
+A total of 12 tables (.csv) from **August 2022 to July 2023** containing user ride information from the company, each consists of 13 columns:
+
+-   **ride_id**: Primary key for each ride.
+
+-   **rideable_type**: Type of bike, 'electric_bike', 'classic_bike' or 'docked_bike'.
+
+-   **started_at**: Date & time ride starts.
+
+-   **ended_at**: Date & time of ride ends.
+
+-   **start_station_name**: Name of station; start.
+
+-   **start_station_id**: Id of station; start.
+
+-   **end_station_name**: Name of station; end.
+
+-   **end_station_id**: Id of station; end.
+
+-   **start_lat**: Latitude of start.
+
+-   **start_lng**: Longitude of start.
+
+-   **end_lat**: Latitude of end.
+
+-   **end_lng**: Longitude of end.
+
+-   **member_casual**: User type, 'member' or 'casual'.
+
+# **Step 3 - Process**
+
+Here we will start processing our data by allowing R to access all 12 tables, then check the data for cleaning.
+
+Running needed libraries.
+
+```{r, message = FALSE}
+# libraries
+library(tidyverse)
+library(lubridate)
+library(readr)
+```
+
+Importing the data onto RStudio.
+
+We want to combine all of the data together into a single data set so that we simplify our analysis process. A quick look at all the tables and they all seem to have the same column names, therefore we can go ahead and merge the data.
+
+Since all the data sets are contained in a single folder, we can construct a function to read in each individual file and merge with the main data object. The merged data will be saved to the local system to save future loading time.
+
+```{r}
+#| cache: true
+#| output: false
+#| message: false
+#| eval: false
+
+# Remove "eval: false" if running from monthly data set or first time
+# read the table and save it to the corresponding variable
+
+read_ride_data <- function(folder) {
+  dirfold <- dir(folder, full.names = TRUE)
+  data <- read_csv(dirfold[1])
+  
+  for (i in 2:length(dirfold)) {
+    new_data <- read_csv(dirfold[i])
+    
+    data <- bind_rows(data, new_data)
+  }
+  
+  return(data)
+}
+
+ride_data <- read_ride_data("tripdata")
+
+write_csv(ride_data, "ride_data.csv")
+```
+
+## Skip Combined Data After First Run
+
+```{r}
+#| cache: true
+#| output: false
+#| message: false
+
+# Loading the data after loading everything the first time
+ride_data <- read_csv("ride_data.csv")
+```
+
+Checking if the merge was successful:
+
+```{r}
+# Checking number of columns
+ncol(ride_data)
+
+# Checking column data type
+str(ride_data)
+
+# dimension of data frame
+dim(ride_data)
+
+# checking some column entries for duplicates
+unique(ride_data$rideable_type)
+unique(ride_data$member_casual)
+
+# Viewing the first 6 rows
+head(ride_data)
+```
+
+
+### **Some information about our data**
+
+The data consist of users' data from August 2022 - July 2023.
+
+There are 5,723,606 rows of user data, this means our data set is large enough such that it will be able to represent the population.
+
+Our data is based on information generated from actual users' usage, therefore we are analyzing the correct population.
+
+There are no personal information given, this means we will not be able to determine the difference between casual and members using for example: age, gender, income, etc.
+
+There are missing data observed from using the head() function, we will need to remove those entries from our analysis. There may also be outliers in which we need to consider it's relevancy.
+
+Since we successfully imported our data in R and merged correctly, we can proceed to data cleaning.
+
+```{r}
+ride_data <- ride_data %>%
+  filter(!is.na(started_at) | !is.na(ended_at)) %>%
+  mutate(duration.sec = as.duration(ended_at - started_at))
+
+```
+
+## Looking For Incorrect Data & Outliers
+
+Rather than looking at all rows and determining any data that are outliers in the analysis, we can visualize the data to determine where we can set our filter values to.
+
+```{r}
+# plotting the duration
+ride_data %>% ggplot(aes(x = member_casual, y = duration.sec)) +
+  geom_point(position = position_jitter())
+
+# summary to check for anomalies, ignoring stations names & id 
+ride_data %>% 
+  select(ride_id, rideable_type, start_lat, start_lng, end_lat, end_lng, member_casual, duration.sec) %>% 
+  summary()
+```
+
+The graph shows that there are many points exceeds the 24 hours or 86,400 seconds and some negative values. For relevance to the previous sentence, the company provides 3 pricing plans: single-ride passes, full-day passes, and annual memberships. As a result, we can infer that bikes usage above 24 hours are either lost to theft, errors, or forgot to return. We will omit these points but keep usage duration under 25 hours to ensure we keep some late returns. Removing these data would allow our conclusion to be more accurate to the average user.
+
+In addition, the summary table shows that there are many empty entries in end_lat and end_lng, the coordinates also seems to be incorrect given that it cannot be 0's for longitude and latitude given that it is Chicago.
+
+```{r}
+# filter data
+ride_data_filtered <- ride_data %>%
+  filter(duration.sec > 0 & duration.sec < 90000) %>%
+  filter(!is.na(end_lat) | !is.na(end_lng)) %>%
+  filter(end_lat != 0 & end_lng != 0)
+  
+# summary to check for anomalies, ignoring stations names & id 
+ride_data_filtered %>% 
+  select(ride_id, rideable_type, start_lat, start_lng, end_lat, end_lng, member_casual, duration.sec) %>% 
+  summary()
+```
+
+Now that the data is clean, we can transform the data to prepare for analysis. The data set is already tidy, so we can add day of the week and a month column to look at them separately.
+
+```{r}
+ride_data_final <- ride_data_filtered %>%
+  mutate(day.of.week.start = wday(started_at, label = TRUE),
+         month.start = month(started_at, label = TRUE),
+         hour.start = hour(started_at),
+         date.start = date(started_at)) %>%
+  group_by(member_casual)
+
+
+```
+
+# **Step 4 & 5 - Analyse & Share**
+
+At this stage, we can now make observations for the marketing analyst team from the data.
+
+## Rides by Membership
+
+Since we are looking at how annual and causal riders differs, let's look at our current riders and what kind of bikes they use.
+
+```{r}
+#| message: false
+
+# Number of rides by membership and bike
+ride_data_final %>%
+  group_by(member_casual, rideable_type) %>%
+  summarise(rides = n()) %>%
+  ggplot(aes(x = rideable_type, y = rides, fill = member_casual)) +
+    geom_bar(position = "dodge", stat = "identity") +
+    geom_text(aes(label = rides), position=position_dodge(width=0.9), vjust=-0.25) +
+    labs(title = "Number of Rides by Membership",
+         x = "Types of Bikes",
+         y = "Number of Rides",
+         caption = "August 2022 - July 2023",
+         fill = "Membership") +
+    theme_bw()
+```
+
+Information we can infer from the graph: - 62.1% of all rides are initiated by members. - Member riders do not use docked bikes, but only 5.8% of casual riders use the docked bike. - Riders use electric bikes more often than classic bike, totaling 54.4% of all rides. This maybe the result of having more electric bikes available for usage.
+
+This result is expected as member riders requires an annual membership, consequently they would think that they need to use the service more often to maximize their annual membership costs. Another important aspect to note is that 30% of riders use Cyclistic to commute to work, which means a membership would be a better choice and therefore increase the number of rides on the members side. One unexpected observation is the lack of members using docked bikes. It could be the result of member riders are able to find bikes outside of docks more quickly or docking station could be located more around areas with high tourism and attractions, where members are less likely to be.
+
+## Ride Duration
+
+```{r}
+#| message: false
+#| warning: false
+
+ride_data_final %>%
+  summarise(avg_duration.sec = mean(duration.sec, na.rm = TRUE)) %>%
+  mutate(avg_duration.min = round(avg_duration.sec/60, digits = 2)) %>%
+  ggplot(aes(x = avg_duration.min, y = member_casual, fill = member_casual)) +
+    geom_col() +
+    geom_text(aes(label = avg_duration.min), position=position_dodge(width=0.9), hjust=1.25) +
+    labs(title = "Average Duration of Rides",
+         x = "Average Duration (minute)",
+         y = "Membership",
+         caption = "August 2022 - July 2023",
+         fill = "Membership") +
+    guides(fill = FALSE) +
+    theme_bw()
+```
+
+On average, casual riders use bikes 8.23 minutes more than members per ride from August 2022 to July 2023. This is likely a result of casual riders maximizing the costs of the single ride & full day passes, whereas members can ride however they'd like without affecting their membership cost.
+
+## Breaking Down by Week
+
+We want to further investigate how members and casual members behave on a day by day basis, allowing us to understand what strategy is best for increasing membership.
+
+We want to find the average number of rides per week, so we would need to find how many Monday, Tuesday, ... exists from August 2022 to July 2023. This requires us to make a new table tallying all the unique dates and joining it with our summarized data:
+
+```{r}
+#| message: false
+#| warning: false
+
+# counts how many day of the week is in the data range
+num.day_of_week <- ride_data_final %>%
+  group_by(day.of.week.start) %>%
+  summarise(date = unique(date.start)) %>%
+  summarise(num.day.of.week = n())
+
+# plots
+ride_data_final %>%
+  group_by(member_casual, day.of.week.start) %>%
+  summarise(rides = n()) %>%
+  left_join(num.day_of_week, by = "day.of.week.start") %>%
+  mutate(avg.rides = round(rides/num.day.of.week, digits = 0)) %>%
+  ggplot(aes(x = day.of.week.start, y = avg.rides, color = member_casual)) +
+    geom_point() +
+    geom_line(aes(group = member_casual)) +
+    geom_text(aes(label = avg.rides), position=position_dodge(width=0.9), vjust=-0.25) +
+    labs(title = "Average Number of Rides by Membership",
+         x = "Day of Week",
+         y = "Average Number of Rides",
+         caption = "August 2022 - July 2023",
+         color = "Membership") +
+    theme_bw()
+
+ride_data_final %>%
+  group_by(member_casual, day.of.week.start) %>%
+  summarise(avg_duration.sec = mean(duration.sec)) %>%
+  mutate(avg_duration.min = round(avg_duration.sec/60, digits = 1)) %>%
+  ggplot(aes(x = day.of.week.start, y = avg_duration.min, color = member_casual)) +
+    geom_point() +
+    geom_line(aes(group = member_casual)) +
+    geom_text(aes(label = avg_duration.min), position=position_dodge(width=0.9), vjust=-0.25) +
+    labs(title = "Average Duration of Rides by Membership",
+         x = "Day of Week",
+         y = "Average Duration of Rides (minutes)",
+         caption = "August 2022 - July 2023",
+         color = "Membership") +
+    theme_bw()
+```
+
+Bike usage for casual is higher during weekends, whereas members usage is higher during weekdays and fall during weekends. This would support the fact that 30% of users use Cyclistic to commute to work, so they are more likely to already have the annual membership to reduce costs long term.
+
+Notably, the average duration of rides during the weekends is about 3 minutes higher than the average (20.3 mins) for casual riders with higher variance as well. For members, the difference is much smaller and tend to stay within 2 minutes between each points, indicating a more stable usage.
+
+## Breakdown By Day
+
+We can further break it down to the starting hour of every ride:
+
+```{r}
+#| message: false
+#| warning: false
+#| results: hide
+
+ride_data_final %>%
+  group_by(member_casual, hour.start, day.of.week.start) %>%
+  summarise(rides = n()) %>%
+  left_join(num.day_of_week, by = "day.of.week.start") %>%
+  mutate(avg.rides.per_week = round(rides/num.day.of.week, digits = 2)) %>%
+  ggplot(aes(x = hour.start, y = avg.rides.per_week, color = member_casual)) +
+    geom_line(aes(group = member_casual)) +
+    facet_wrap(~ day.of.week.start) +
+    labs(title = "Start Time of Rides",
+         x = "Time of day (24 hour)",
+         y = "Average Number of Rides Initiated Per Week",
+         caption = "August 2022 - July 2023",
+         color = "Membership") +
+    theme_bw()
+```
+
+At first glance, there are two spikes in members around 7AM and 5PM, where most people begin and finish work. However, casual riders only have a single spike around 5PM, supporting the idea that they are more likely using bikes for leisure after work.
+
+Another important distinction is during weekends, where the line behaves differently than during weekdays. Users tends to ride around 1-2 PM, and rider usage difference between casual and member converges. Notice that the number of rides initiate drops much quicker on the casual side than members.
+
+## By Month
+
+Finally, we can check how riders behave by month for any additional information. An intuition is that since this will be a monthly observation, there would be an increased in activities during warm months and decreased activities during cold months.
+
+```{r}
+#| message: false
+#| warning: false
+
+# count how many months are in day of the week to avoid doub
+ride_data_final %>%
+  group_by(member_casual, month.start) %>%
+  summarise(rides = n()) %>%
+  ggplot(aes(x = month.start, y = rides, color = member_casual)) +
+    geom_point() +
+    geom_line(aes(group = member_casual)) +
+    labs(title = "Monthly Number of Rides",
+         caption = "August 2022 - July 2023",
+         color = "Membership",
+         y = "Number of Rides",
+         x = "Month") +
+    theme_bw()
+```
+
+As expected, there are more rides from April to October, where it is late Spring to early Fall. The highest activity for members is during July and August for casual. The least active is December for members and January for casuals.
+
+The gap between casual and member could be explained the same fact that people commuting to work tends to already have a membership to reduce costs, allowing more usage of bikes during cold seasons.
+
+# **Step 6 - Act**
+
+Based on the analysis, members do in fact use Cyclistic more often than casuals. We now need to find ways to incentivize casual riders to purchase the annual membership. A main barrier for purchase of memberships is the fact that it is an annual plan, where most will unlikely be using bikes during cold season. Consequently, riders are unable justify the cost of the membership. A possible solution is to split the annual membership into different categories, such as:
+
+-   Offer a seasonal annual membership.
+
+    -   Summer membership for tourists and casual riders who most likely to be active during warm months.
+
+    -   During cold months, offer a discount for a winter membership.
+
+-   An after-hour membership for those who use bikes for leisure.
+
+-   Weekend only membership for people who are most active during weekends.
+
+-   For any riders who are still unable to afford annual memberships and use Cyclistic for leisure, offer 6 months membership instead to further reduce costs. This would allow a smaller barrier to entry into memberships for casual riders and frequent travelers.
+
+## Improvements
+
+There were a lot of insights in the analysis, however it is not 100% complete.
+
+-   A further investigation into the distance traveled between members and casual riders are needed for a complete recommendation. For example, maybe the costs of riding longer could be expensive for casual riders, requiring a membership for such issue. However, it is likely that casual riders are maximizing their usage for full-day passes as noted before.
+
+-   A deeper personal understanding of Chicago is needed, such as age demographic, city layout, and tourism trends.
+
+-   The data for longitude and latitude could have been utilized for a more complete insights, requiring a more advanced code to map the data automatically.
+
+-   Conduct a survey of the general public to understand their preferences and behaviour. More details may allow us to create a better solution to meet public goals and maximize number of riders.
+
+-   In addition, conduct surveys on repeating riders and members for feedback and adjust pricing as needed. Casual riders may have issues with current memberships offers that could deter them from purchasing them.
+
+# Thank you for reading!
