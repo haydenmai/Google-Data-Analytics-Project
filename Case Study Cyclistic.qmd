@@ -178,6 +178,7 @@ ride_data <- ride_data %>%
   filter(!is.na(started_at) | !is.na(ended_at)) %>%
   mutate(duration.sec = as.duration(ended_at - started_at))
 
+head(ride_data)
 ```
 
 ## Looking For Incorrect Data & Outliers
@@ -222,7 +223,7 @@ ride_data_final <- ride_data_filtered %>%
          date.start = date(started_at)) %>%
   group_by(member_casual)
 
-
+ride_data_final
 ```
 
 # **Step 4 & 5 - Analyse & Share**
