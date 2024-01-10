@@ -8,7 +8,6 @@ The result is a combination what I've learned in **Google Data Analytics Profess
 You can access the completed analysis by downloading the HTML file, or if you want to take a deeper look at my code, the .qmd file will better suit you.
 # Instructions
 1. To download, click on either "Case Study Cyclistic.html" or "Case Study Cyclistic.qmd"
-2. Click on the 3 dots near the top right and click "Download"
-  - or alternatively, `Ctrl` + `Shift` + `S` to download the file.
+2. Click on the 3 dots near the top right and click "Download" or alternatively, `Ctrl` + `Shift` + `S` to download the file.
 3. Read/Edit the project!
 ## Thanks for checking it out!
