@@ -1,7 +1,7 @@
 # Welcome!
 This is my capstone project for the Google Data Analytics Certificate.
 
-This project was supposed to be done in October, however during the semester I found a few of my classes to be complementary of what I've learned during this course. As a result, I finally completed this project after the semester ended as a way to present something I've learned the past few months.
+This project was supposed to be done in October, however during the semester I found a few of my classes to be complementary of what I've learned during this course. As a result, I finally completed this project after the semester ended as a way to present things I've learned the past few months.
 
 The result is a combination what I've learned in **Google Data Analytics Professional Certificate** course on Coursera, as well as **ECON 334** (Data Visualization & Econ) & **STAT 260/261** (Intro to R for Data Science) at Simon Fraser University.
 
